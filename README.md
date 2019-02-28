@@ -35,26 +35,26 @@ This document shows how to deploy a custom ingress controller to an IKS multizon
 An instance of your custom ingress controller will be installed in each zone your IKS multi-zone cluster. ALB service in each zone will be updated to connect to the custom ingress controller's pods in that respective zone. For each instance of the custom ingress controller, kubernetes scheduler will schedule pods to only be deployed on different worker nodes in the respective zone.  
 ![](https://raw.githubusercontent.com/ssibm/iks-custom-ingress/master/docs/img/hld.png "Custom ingress controller in IKS cluster")
 
-<br>
->**NOTE: Repeat following sections for each zone (dal10, dal12, dal13 etc.) to complete deployment of custom ingress controller in your _Multizone_ IKS cluster.**
+
+>__NOTE: Repeat following sections for each zone (dal10, dal12, dal13 etc.) to complete deployment of custom ingress controller in your _Multizone_ IKS cluster.__
 
 ##### Disable Public ALB in IKS cluster
 1. Get public ALB id  
 `$ ibmcloud ks albs --cluster <cluster-name> | grep public`  
 
 2. Disable IKS provided default ingress controller. Repeat this for ALB in each zone.  
-`$ ibmcloud ks alb-configure --albID <ALB_ID> --disable-deployment`  
+`$ ibmcloud ks alb-configure --albID <ALBid> --disable-deployment`  
 
 3. Check to confirm _Enabled_ state for each ALB is _false_  
 `$ ibmcloud ks albs --cluster <cluster-name>`  
 
 ##### Add affinity rules to Helm values  
 1. Generate helm values file containing node and pod affinity rules.  
-Replace _<zone\>_ with zone name and run following command. Sets default ingress controller name to ___custom-ingress___, to override append _-i <ingress-name\>_ to end of the command.
+Replace _<zone\>_ with zone name and run following command. Sets default ingress controller name to ___custom-ingress___, to override append _-i <ingress-name\>_ to end of the command.  
 ```bash
 $ curl -sSL https://raw.githubusercontent.com/ssibm/iks-custom-ingress/master/scripts/create-values-affinity.sh | sh -s -- -z <zone>
-```
-  Values file with node affinity and pod anti-affinity rules will be created at _/tmp/values-affinity-<zone\>.yaml_. This ensures that kubernetes scheduler for the zone-specific custom ingress controller will create the pods on different nodes in the same zone.  
+```    
+Values file with node affinity and pod anti-affinity rules will be created at _/tmp/values-affinity-<zone\>.yaml_. This ensures that kubernetes scheduler for the zone-specific custom ingress controller will create the pods on different nodes in the same zone.  
 
   ```yaml
   /tmp/values-affinity-dal10.yaml
@@ -100,7 +100,9 @@ $ helm install --name <zone>-custom-ingress --namespace kube-system stable/nginx
 
 ##### Update ALB service  
 1. Get service ALBid specific to zone. Replace _<cluster-name\>_ and _<zone\>_ in the command.  
-`$ ibmcloud ks albs --cluster <cluster-name> | grep <zone> | grep public`  
+```bash
+$ ibmcloud ks albs --cluster <cluster-name> | grep <zone> | grep public
+```  
 
 2. Edit ALB service, set _selector:_ labels to _app: <zone\>-<ingress-controller-name\>_. For custom ingress controller used in this example also set _component: controller_ to select controller pods. Depending on labels used in your custom ingress controller, use the required selector labels.  
 ```bash
@@ -174,8 +176,10 @@ $ kubectl delete -f https://raw.githubusercontent.com/ssibm/iks-custom-ingress/m
 ```
 
 #### Re-enable IKS Ingress Controller  
-- Re-set ALB to use IKS provided default ingress controller. This will not delete the custom ingress controller, it only updates ALB service to handle all incoming ingress resource rules using the default ingress controller. Repeat this for _<alb ID\>_ in each zone.
-`$ ibmcloud ks alb-configure --albID <alb ID> --enable`  
+- Re-set ALB to use IKS provided default ingress controller. This will not delete the custom ingress controller, it only updates ALB service to handle all incoming ingress resource rules using the default ingress controller. Repeat this for _<ALBid\>_ in each zone.
+```bash
+$ ibmcloud ks alb-configure --albID <ALBid> --enable
+```  
 
 #### Delete custom ingress controller
 - Replace _<zone\>_ with zone name to delete the custom ingress controller resources from _kube-system_ namespace. Repeat this for each zone in your MZR cluster.
