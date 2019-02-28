@@ -2,16 +2,16 @@
 
 IBM Kubernetes Service (IKS) cluster created in a Multizone Region (MZR) provides an application load balancer (ALB) in each zone and a multi-zone load balancer (MZLB) for the region. Each ALB uses an IKS provided ingress controller instance in that specific zone to handle incoming ingress requests. Additional information on Ingress in IKS is available [here](https://cloud.ibm.com/docs/containers?topic=containers-ingress#components).
 
-This document shows how to deploy a custom ingress controller to an IKS multizone cluster and replacing the default ingress controller provided by IKS.
+This document shows how to deploy a custom ingress controller to an IKS multi-zone cluster and replacing the default ingress controller provided by IKS.
 
 #### Pre-requisites
 ##### Custom ingress controller helm chart  
-- Using instructions in this document, the community ingress controller will be deployed using _stable/nginx-ingress_ helm chart. Note that this ingress controller is only used as an example. You can either use this chart, or you can bring your own custom ingress controller helm chart.  
+- Using instructions in this document, _stable/nginx-ingress_ helm chart will be used to deploy the community ingress controller in a multi-zone IKS cluster. Instructions in this document, use this ingress controller as an example.  
 
-  If planning to use this chart to deploy a custom ingress controller for production workloads, refer to [nginx ingress controller documentation](https://github.com/helm/charts/tree/master/stable/nginx-ingress) to customize and configure the deployment to meet your requirements.
+  If planning to use this chart to deploy a custom ingress controller for production-grade workloads, refer to [nginx ingress controller documentation](https://github.com/helm/charts/tree/master/stable/nginx-ingress) to customize and configure the deployment to meet your requirements.
 
 ##### IKS cluster in Multizone Region
-- A working IKS cluster created in a multi-zone region  
+- A working IKS cluster created in a multi-zone region.    
 
 ##### Setup CLI
 - Install [kubectl](https://kubernetes.io/docs/tasks/tools/install-kubectl/#install-kubectl) and [ibmcloud](https://cloud.ibm.com/docs/cli/reference/ibmcloud?topic=cloud-cli-install-ibmcloud-cli#shell_install) CLIs.  
@@ -32,11 +32,11 @@ This document shows how to deploy a custom ingress controller to an IKS multizon
 `$ kubectl config current-context`  
 
 #### Implement custom ingress controller  
-An instance of your custom ingress controller will be installed in each zone your IKS multi-zone cluster. ALB service in each zone will be updated to connect to the custom ingress controller's pods in that respective zone. For each instance of the custom ingress controller, kubernetes scheduler will schedule pods to only be deployed on different worker nodes in the respective zone.  
+To deploy a custom ingress controller in a multi-zone IKS cluster, one instance of custom ingress controller should be installed in each zone. For each instance of the custom ingress controller, kubernetes scheduler should schedule pods to only be deployed on different worker nodes in the same zone. And then, ALB service in each zone should be updated to connect to the custom ingress controller's pods in that respective zone.    
 ![](https://raw.githubusercontent.com/ssibm/iks-custom-ingress/master/docs/img/hld.png "Custom ingress controller in IKS cluster")
 
 ##### Get ALBid and Zone names
-Following table shows an example cluster with 3 zones. Get ALBid and Zone name information for each ALB in your multizone IKS cluster. This information will be used in the next set of commands. They should be repeated for each combination of ALBid and Zone for all the zones.
+Following table shows an example cluster with 3 zones. Get ALBid and Zone name information for each ALB in your multi-zone IKS cluster. This information will be used in the next set of commands. They should be repeated for each combination of ALBid and Zone for all the zones.
 
 - Get public ALB id and zone name, note down in a table like below.    
 ```bash
@@ -102,7 +102,7 @@ Values file with node affinity and pod anti-affinity rules will be created at _/
   ```
 
 ##### Deploy custom ingress controller resources
-This document deploys a custom ingress controller using _stable/nginx-ingress_ helm chart. If deploying a different custom ingress controller, add ___affinity:___ rules to deployment template in your chart, and use that chart to install.  
+This document deploys a custom ingress controller using _stable/nginx-ingress_ helm chart. If deploying a different ingress controller, add ___affinity:___ rules to deployment template in your chart or to the deployment resource yaml, and then install.  
 
 1. Dry-run and confirm values are correctly set. Replace _<zone\>_ with target zone and run the following command. Repeat this for each zone.  
 ```bash
