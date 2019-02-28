@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  name: app-with-ingress
+  name: app1-ingress
 spec:
   rules:
   - http:
@@ -26,7 +26,7 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deploy-app1
+  name: app1-deploy
   labels:
     app: app1
 spec:
