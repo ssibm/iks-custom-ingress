@@ -38,7 +38,7 @@ To deploy a custom ingress controller in a multi-zone IKS cluster, one instance 
 ##### Get ALBid and Zone names
 Following table shows an example cluster with 3 zones. Get ALBid and Zone name information for each ALB in your multi-zone IKS cluster. This information will be used in the next set of commands. They should be repeated for each combination of ALBid and Zone for all the zones.
 
-- Get public ALB id and zone name, note down in a table like below.    
+- Get public ALB id and zone name, note them down in a table like below.    
 ```bash
 $ ibmcloud ks albs --cluster <cluster-name> | grep public
 ```  
@@ -52,7 +52,8 @@ ALBid and Zone information (example values)
 | example-cluster-dal | dal13 | public-crec315b18e2d7858e9d36fe1ad10cc803-alb3 |
 
 <br>
->__NOTE: Repeat following sections for each zone (dal10, dal12, dal13 etc.) to complete deployment of custom ingress controller in your _Multizone_ IKS cluster.__
+
+>__NOTE: Repeat following sections for each zone (dal10, dal12, dal13 etc.) in your _Multizone_ IKS cluster.__
 
 ##### Disable Public ALB in IKS cluster
 1. Disable IKS provided default ingress controller. Repeat this for ALB in each zone.  
