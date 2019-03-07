@@ -71,45 +71,44 @@ $ ibmcloud ks albs --cluster <cluster-name>
 Replace _<zone\>_ with zone name and run following command. Sets default ingress controller name to ___custom-ingress___, to override append _-i <ingress-name\>_ to end of the command.  Repeat this command for each zone.  
 ```bash
 $ curl -sSL https://raw.githubusercontent.com/ssibm/iks-custom-ingress/master/scripts/create-values-affinity.sh | sh -s -- -z <zone>
-```    
-Values file with node affinity and pod anti-affinity rules will be created at _/tmp/values-affinity-<zone\>.yaml_. This ensures that kubernetes scheduler for the zone-specific custom ingress controller will create the pods on different nodes in the same zone.  
+```   
+ Values file with node affinity and pod anti-affinity rules will be created at _/tmp/values-affinity-<zone\>.yaml_. This ensures that kubernetes scheduler for the zone-specific custom ingress controller will create the pods on different nodes in the same zone.  
 
-  An example affinity rules file created for zone: _dal10_ for custom ingress controller named _dal10-custom-ingress_.  
+ An example affinity rules file created for zone: _dal10_ for custom ingress controller named _dal10-custom-ingress_.  
 
-    ```yaml
-    /tmp/values-affinity-dal10.yaml
+```yaml  
+/tmp/values-affinity-dal10.yaml  
 
-    nameOverride: &app_name dal10-custom-ingress
-    fullnameOverride: *app_name
-    zone: &zone dal10
-    controller:
-      replicaCount: 2
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: failure-domain.beta.kubernetes.io/zone
-                operator: In
-                values:
-                - *zone
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - *app_name
-              - key: component
-                operator: In
-                values:
-                - controller
-            topologyKey: kubernetes.io/hostname
-    ```
+nameOverride: &app_name dal10-custom-ingress
+fullnameOverride: *app_name
+zone: &zone dal10
+controller:
+  replicaCount: 2
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: failure-domain.beta.kubernetes.io/zone
+            operator: In
+            values:
+            - *zone
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - *app_name
+          - key: component
+            operator: In
+            values:
+            - controller
+        topologyKey: kubernetes.io/hostname
+```
 
-  In above file, under the pod anti-affinity rules, there is an extra condition that _key: component_ should be equal to _controller_. This extra condition is specific to the community nginx controller deployed in this document. All custom ingress controllers require _key: app_ condition, but all additional conditions should be set based on the labels defined on your specific ingress controller.
-
+ In above file, under the pod anti-affinity rules, there is an extra condition that _key: component_ should be equal to _controller_. This extra condition is specific to the community nginx controller deployed in this document. All custom ingress controllers require _key: app_ condition, but all additional conditions should be set based on the labels defined on your specific ingress controller.
 
 ##### Deploy custom ingress controller resources
 This document deploys a custom ingress controller using _stable/nginx-ingress_ helm chart. If deploying a different ingress controller, add ___affinity:___ rules to deployment template in your chart or to the deployment resource yaml, and then install.  
