@@ -42,6 +42,10 @@ controller:
             operator: In
             values:
             - *app_name
+          - key: component
+            operator: In
+            values:
+            - controller
         topologyKey: kubernetes.io/hostname
 EOF
 [ $? == 0 ] && { echo "Created values file: /tmp/values-affinity-$z.yaml"; exit 0; } \

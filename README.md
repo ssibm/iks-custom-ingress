@@ -61,7 +61,7 @@ ALBid and Zone information (example values)
 $ ibmcloud ks alb-configure --albID <ALBid> --disable-deployment
 ```  
 
-2. Check to confirm _Enabled_ state for each ALB is _false_  
+2. Check to confirm for __public__ ALB in each zone; _Enabled_ is _false_ and _Status_ is _disabled_.  
 ```bash
 $ ibmcloud ks albs --cluster <cluster-name>
 ```  
@@ -74,33 +74,42 @@ $ curl -sSL https://raw.githubusercontent.com/ssibm/iks-custom-ingress/master/sc
 ```    
 Values file with node affinity and pod anti-affinity rules will be created at _/tmp/values-affinity-<zone\>.yaml_. This ensures that kubernetes scheduler for the zone-specific custom ingress controller will create the pods on different nodes in the same zone.  
 
-  ```yaml
-  /tmp/values-affinity-dal10.yaml
+  An example affinity rules file created for zone: _dal10_ for custom ingress controller named _dal10-custom-ingress_.  
 
-  nameOverride: &app_name dal10-custom-ingress
-  fullnameOverride: *app_name
-  zone: &zone dal10
-  controller:
-    replicaCount: 2
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: failure-domain.beta.kubernetes.io/zone
-              operator: In
-              values:
-              - *zone
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-            - key: app
-              operator: In
-              values:
-              - *app_name
-          topologyKey: kubernetes.io/hostname
-  ```
+    ```yaml
+    /tmp/values-affinity-dal10.yaml
+
+    nameOverride: &app_name dal10-custom-ingress
+    fullnameOverride: *app_name
+    zone: &zone dal10
+    controller:
+      replicaCount: 2
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: failure-domain.beta.kubernetes.io/zone
+                operator: In
+                values:
+                - *zone
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - *app_name
+              - key: component
+                operator: In
+                values:
+                - controller
+            topologyKey: kubernetes.io/hostname
+    ```
+
+  In above file, under the pod anti-affinity rules, there is an extra condition that _key: component_ should be equal to _controller_. This extra condition is specific to the community nginx controller deployed in this document. All custom ingress controllers require _key: app_ condition, but all additional conditions should be set based on the labels defined on your specific ingress controller.
+
 
 ##### Deploy custom ingress controller resources
 This document deploys a custom ingress controller using _stable/nginx-ingress_ helm chart. If deploying a different ingress controller, add ___affinity:___ rules to deployment template in your chart or to the deployment resource yaml, and then install.  
@@ -199,7 +208,7 @@ $ ibmcloud ks alb-configure --albID <ALBid> --enable
 #### Delete custom ingress controller
 - Replace _<zone\>_ with zone name to delete the custom ingress controller resources from _kube-system_ namespace. Repeat this for each zone in your MZR cluster.
 ```bash
-$ helm delete --purge <zone>-custom-ingress -n kube-system
+$ helm delete --purge <zone>-custom-ingress
 ```
 
 This completes a successful deployment and cleanup of a custom ingress controller in a IKS multi-zone cluster. For additional information on IBM Cloud and IBM Kubernetes Service go to
